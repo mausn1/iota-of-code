@@ -1,26 +1,25 @@
-function pomo2(){
+function pomo(){
   arg=$1
-  shift
-  args="$*"
 
-  if [[ $arg == "time" ]];
+  if [[ $arg != "time" ]];
   then
-    hour_left=$(($(date +%H)-hour_started))
-    minute_left=$(($(date +%M)-minute_started))
-    second_left=$(($(date +%S)-second_started))
-    dunstify "Pomodoro: time left  " "${hour_left}:${minute_left}:${second_left}"
-  else  
+    start=$(date +%s)
     min=${arg:?Invalid time}
     sec=$((min * 60))
-    # break=$((sec/4))
+    shift
+    args="$*"
     msg="${args:?Invalid message}"
+    time_started=$(date +%T)
+    dunstify "Pomodoro: started  " "${time_started}" 
+    (sleep "${sec}" && dunstify -u critical -t 0 "Pomodoro: finished  " -a pomo "${msg:?}")&
+  else  
+    end=$(date +%s)
+    arg_seconds=$(echo "$start + $sec - $end" | bc)
+    format=$(awk -v t=$arg_seconds 'BEGIN{printf "%d:%02d:%02d\n", t/3600, t/60%60, t/1%60}')
+    dunstify "Pomodoro: time left  " "${format}" 
 
-    while ((${sec})) > 0; do
-      hour_started=$(date +%H)
-      minute_started=$(date +%M)
-      second_started=$(date +%S)
-      dunstify "Pomodoro: started  " "${hour_started}:${minute_started}:${second_started}"  && sleep "${sec:?}" && dunstify -u critical -t 0 "Pomodoro: finished  " -a pomo "${msg:?}"
-      break
-    done
   fi
 }
+
+# REMINDER, BASH SYNTAX IS ASS
+
